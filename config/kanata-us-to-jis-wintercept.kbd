@@ -1,0 +1,87 @@
+;; ANSI US physical keyboard -> Japanese Windows 106/109 layout
+;; Kanata v1.11+ using the *_wintercept binary.
+;;
+;; Windows itself must be set to the Japanese keyboard layout.  This file
+;; intercepts ONLY the keyboards registered in `windows-interception-keyboard-hwids`.
+;; Consequently, unregistered JIS keyboards remain completely unchanged.
+;;
+;; Registration procedure
+;; 1. Leave the list below empty and start Kanata with --debug.
+;; 2. Press a key on the keyboard to register. The console prints its HWID as
+;;    a comma-separated number string.
+;; 3. Copy that whole quoted string into the list below, then restart Kanata.
+;;
+;; Add every US keyboard here. Do not add a JIS keyboard.
+(defcfg
+  ;; Route unmapped keys (letters, 3/4/5, etc.) through kanata too.
+  ;; Without this, an unmapped key typed while an override temporarily
+  ;; releases Shift bypasses kanata and reaches the OS with wrong shift state.
+  process-unmapped-keys yes
+  windows-interception-keyboard-hwids (
+    ;; US_HWIDS_BEGIN
+    ;; "70, 0, 60, 0, ..."
+    ;; US_HWIDS_END
+  )
+)
+
+;; Only positions whose printed character differs between ANSI US and JIS.
+;; Keys not listed here pass through unchanged.
+(defsrc
+  grv 2 6 7 8 9 0 - = [ ] \ ; ' lsft rsft
+)
+
+(deflayer base
+  grv 2 6 7 8 9 0 - = [ ] \ ; ' lsft rsft
+)
+
+(defoverrides
+  ;; `  ~
+  (grv)      (lsft [)
+  (lsft grv) (lsft =)
+  (rsft grv) (rsft =)
+
+  ;; @  ^  &  *  (  )
+  (lsft 2) ([)
+  (rsft 2) ([)
+  (lsft 6) (=)
+  (rsft 6) (=)
+  (lsft 7) (lsft 6)
+  (rsft 7) (rsft 6)
+  (lsft 8) (lsft ')
+  (rsft 8) (rsft ')
+  (lsft 9) (lsft 8)
+  (rsft 9) (rsft 8)
+  (lsft 0) (lsft 9)
+  (rsft 0) (rsft 9)
+
+  ;; _  =  +
+  ;; NOTE: requires the patched kanata build (interception_convert.rs with
+  ;; KEY_RO -> SC_73); stock 1.11.0 wintercept emits Esc for ro/yen outputs.
+  (lsft -) (lsft ro)
+  (rsft -) (rsft ro)
+  (=)       (lsft -)
+  (lsft =)  (lsft ;)
+  (rsft =)  (rsft ;)
+
+  ;; [  {  ]  }
+  ([)       (])
+  (lsft [)  (lsft ])
+  (rsft [)  (rsft ])
+  (])       (\)
+  (lsft ])  (lsft \)
+  (rsft ])  (lsft \)
+
+  ;; \  |
+  ;; NOTE: "yen" is parsed as plain backslash by kanata; use the "¥" name to
+  ;; emit the JIS yen key (SC 0x7D). Requires the patched build as well.
+  (\)       (ro)
+  (lsft \)  (lsft ¥)
+  (rsft \)  (rsft ¥)
+
+  ;; :  '  "
+  (lsft ;)  (')
+  (rsft ;)  (')
+  (')       (lsft 7)
+  (lsft ')  (lsft 2)
+  (rsft ')  (rsft 2)
+)
